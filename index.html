@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>sort fasta</title>
+</head>
+<body>
+    <button id="nwkTreeFile" type="button">
+        Select
+    </button>
+    <div id="con"></div>
+
+    <script>
+        "use strict";
+        const remote = require("electron").remote;
+        const Dialog = remote.dialog;
+        const BrowserWindow = remote.BrowserWindow;
+
+        
+        const fs = remote.require("fs");
+
+        const con = document.querySelector("#con");
+
+        const btnNwkTreeFile = document.querySelector("#nwkTreeFile");
+        btnNwkTreeFile.addEventListener("click", () => {
+            alert("clicked");
+            Dialog.showOpenDialog(null, {
+                properties: ["openFile"],
+                title: "select file",
+            },
+            (fileName) => {
+                fs.readFile(fileName, "utf-8", (err, data) => {
+                    if(err){
+                        alert("An error occured reading the file :" + err.message);
+                        throw err
+                    }
+
+                    con.innerText = "ok";
+                });
+            });
+        });
+    </script>
+</body>
+</html>

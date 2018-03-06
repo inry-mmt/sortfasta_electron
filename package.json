@@ -1,0 +1,17 @@
+{
+  "name": "sortfasta",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node_modules/.bin/electron ."
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "biojs-io-newick": "^1.5.0",
+    "electron": "^1.8.3",
+    "fasta2json": "^0.1.1"
+  }
+}
