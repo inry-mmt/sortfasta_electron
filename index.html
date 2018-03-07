@@ -3,90 +3,146 @@
 <head>
   <meta charset="utf-8">
   <title>sort fasta</title>
-</head>
-<body>
-  <div>
-    <button id="nwkTreeFile" type="button">
-      Select NewickTreeFile
-    </button>
-  </div>
-  <div>
-    <button id="fastaFile" type="button">
-      Select FastaFile
-    </button>
-  </div>
-  <div>
-    <button id="sort" type="button">
-      sort them
-    </button>
-  </div>
-  <div id="debug"></div>
-
-  <script>
-    "use strict";
-    const encoding = 'utf8';
-
-    const remote = require("electron").remote;
-    const Dialog = remote.dialog;
-    const BrowserWindow = remote.BrowserWindow;
-    const fs = remote.require("fs");
-
-    const fastaSorter = require("./fastaSorter.js");
-
-    const debug = document.querySelector("#debug");
-
-    const raw_data = {
-      newick: null,
-      fasta: null,
+  <style>
+    button { /* reset */
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      outline: none;
+      padding: 0;
+      appearance: none;
     }
 
-    const btnNwkTreeFile = document.querySelector("#nwkTreeFile");
-    btnNwkTreeFile.addEventListener("click", () => {
-      Dialog.showOpenDialog(null, {
-        properties: ["openFile"],
-        filters: [
-          { name: 'Newick Tree File', extensions: ['nwk'] }
-        ],
-        title: "select nwk file",
-      },
-      (fileNames) => {
-        const fileName = fileNames[0];
-        const data = fs.readFileSync(fileName, encoding);
-        raw_data.newick = data;
-      });
-    });
-
-    const btnFastaFile = document.querySelector("#fastaFile");
-    btnFastaFile.addEventListener('click', () => {
-      Dialog.showOpenDialog(null, {
-        properties: ["openFile"],
-        filters: [
-          { name: 'FASTA File', extensions: ['fas', 'fasta'] }
-        ],
-        title: "select fasta file",
-      },
-      (fileNames) => {
-        const fileName = fileNames[0];
-        const data = fs.readFileSync(fileName, encoding);
-        raw_data.fasta = data;
-      });
-    });
-
-    const btnSortStart = document.querySelector('#sort');
-    btnSortStart.addEventListener('click', () => {
-      const sortedFastaData = fastaSorter.sort(raw_data.fasta, raw_data.newick);
-      Dialog.showSaveDialog(null, {
-        title: 'save sorted fasta file',
-        filters: [
-          { name: 'FASTA File', extensions: ['fas', 'fasta'] }
-        ],
-        defaultPath: 'sorted_fasta.fas',
-      },
-      (fileName) => {
-        fs.writeFileSync(fileName, sortedFastaData);
-        alert('saved');
-      });
-    });
-  </script>
+    .row{
+      margin: 30px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .left{
+      flex-basis: 30%;
+    }
+    .right{
+      flex-basis: 65%;
+    }
+    .filename{
+      font-size: 0.8rem;
+      height: 100%;
+      border: 1px solid #ccc;
+    }
+    .button{
+      width: 100%;
+      height: 20px;
+      line-height: 20px;
+      cursor: pointer;
+      background-color: #ddd;
+      border-radius: 4px;
+      box-shadow: 2px 2px 5px gray;
+    }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <div class="left">
+      <button id="nwkTreeFile" class="button" type="button">
+        1. Select NewickTreeFile
+      </button>
+    </div>
+    <div class="right">
+      <div class="filename" id="nwkSelectedFileName"></div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="left">
+      <button id="fastaFile" class="button" type="button">
+        2. Select FastaFile
+      </button>
+    </div>
+    <div class="right">
+      <div class="filename" id="fastaSelectedFileName"></div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="left">
+      <button id="sort" class="button" type="button">
+        Start Sorting
+      </button>
+    </div>
+    <div class="right"></div>
+  </div>
+  <div id="debug"></div>
 </body>
+<script>
+  "use strict";
+  const encoding = 'utf8';
+
+  const remote = require("electron").remote;
+  const Dialog = remote.dialog;
+  const BrowserWindow = remote.BrowserWindow;
+  const fs = remote.require("fs");
+
+  const fastaSorter = require("./fastaSorter.js");
+
+  const debug = document.querySelector("#debug");
+
+  const raw_data = {
+    newick: null,
+    fasta: null,
+  }
+
+  const nwkSelectedFileName = document.querySelector('#nwkSelectedFileName');
+  const btnNwkTreeFile = document.querySelector("#nwkTreeFile");
+  btnNwkTreeFile.addEventListener("click", () => {
+    Dialog.showOpenDialog(null, {
+      properties: ["openFile"],
+      filters: [
+        { name: 'Newick Tree File', extensions: ['nwk'] }
+      ],
+      title: "select nwk file",
+    },
+    (fileNames) => {
+      const fileName = fileNames[0];
+      const data = fs.readFileSync(fileName, encoding);
+      raw_data.newick = data;
+      nwkSelectedFileName.innerText = fileName;
+    });
+  });
+
+  const btnFastaFile = document.querySelector("#fastaFile");
+  const fastaSelectedFileName = document.querySelector('#fastaSelectedFileName');
+  btnFastaFile.addEventListener('click', () => {
+    Dialog.showOpenDialog(null, {
+      properties: ["openFile"],
+      filters: [
+        { name: 'FASTA File', extensions: ['fas', 'fasta'] }
+      ],
+      title: "select fasta file",
+    },
+    (fileNames) => {
+      const fileName = fileNames[0];
+      const data = fs.readFileSync(fileName, encoding);
+      raw_data.fasta = data;
+      fastaSelectedFileName.innerText = fileName;
+    });
+  });
+
+  const btnSortStart = document.querySelector('#sort');
+  btnSortStart.addEventListener('click', () => {
+    if(!raw_data.fasta || !raw_data.newick){
+      alert('please select fasta file and newick file before start sorting');
+      return;
+    }
+    const sortedFastaData = fastaSorter.sort(raw_data.fasta, raw_data.newick);
+    Dialog.showSaveDialog(null, {
+      title: 'save sorted fasta file',
+      filters: [
+        { name: 'FASTA File', extensions: ['fas', 'fasta'] }
+      ],
+      defaultPath: 'sorted_fasta.fas',
+    },
+    (fileName) => {
+      fs.writeFileSync(fileName, sortedFastaData);
+      alert('saved!');
+    });
+  });
+</script>
 </html>
