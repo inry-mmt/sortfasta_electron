@@ -1,44 +1,92 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>sort fasta</title>
+  <meta charset="utf-8">
+  <title>sort fasta</title>
 </head>
 <body>
+  <div>
     <button id="nwkTreeFile" type="button">
-        Select
+      Select NewickTreeFile
     </button>
-    <div id="con"></div>
+  </div>
+  <div>
+    <button id="fastaFile" type="button">
+      Select FastaFile
+    </button>
+  </div>
+  <div>
+    <button id="sort" type="button">
+      sort them
+    </button>
+  </div>
+  <div id="debug"></div>
 
-    <script>
-        "use strict";
-        const remote = require("electron").remote;
-        const Dialog = remote.dialog;
-        const BrowserWindow = remote.BrowserWindow;
+  <script>
+    "use strict";
+    const encoding = 'utf8';
 
-        
-        const fs = remote.require("fs");
+    const remote = require("electron").remote;
+    const Dialog = remote.dialog;
+    const BrowserWindow = remote.BrowserWindow;
+    const fs = remote.require("fs");
 
-        const con = document.querySelector("#con");
+    const fastaSorter = require("./fastaSorter.js");
 
-        const btnNwkTreeFile = document.querySelector("#nwkTreeFile");
-        btnNwkTreeFile.addEventListener("click", () => {
-            alert("clicked");
-            Dialog.showOpenDialog(null, {
-                properties: ["openFile"],
-                title: "select file",
-            },
-            (fileName) => {
-                fs.readFile(fileName, "utf-8", (err, data) => {
-                    if(err){
-                        alert("An error occured reading the file :" + err.message);
-                        throw err
-                    }
+    const debug = document.querySelector("#debug");
 
-                    con.innerText = "ok";
-                });
-            });
-        });
-    </script>
+    const raw_data = {
+      newick: null,
+      fasta: null,
+    }
+
+    const btnNwkTreeFile = document.querySelector("#nwkTreeFile");
+    btnNwkTreeFile.addEventListener("click", () => {
+      Dialog.showOpenDialog(null, {
+        properties: ["openFile"],
+        filters: [
+          { name: 'Newick Tree File', extensions: ['nwk'] }
+        ],
+        title: "select nwk file",
+      },
+      (fileNames) => {
+        const fileName = fileNames[0];
+        const data = fs.readFileSync(fileName, encoding);
+        raw_data.newick = data;
+      });
+    });
+
+    const btnFastaFile = document.querySelector("#fastaFile");
+    btnFastaFile.addEventListener('click', () => {
+      Dialog.showOpenDialog(null, {
+        properties: ["openFile"],
+        filters: [
+          { name: 'FASTA File', extensions: ['fas', 'fasta'] }
+        ],
+        title: "select fasta file",
+      },
+      (fileNames) => {
+        const fileName = fileNames[0];
+        const data = fs.readFileSync(fileName, encoding);
+        raw_data.fasta = data;
+      });
+    });
+
+    const btnSortStart = document.querySelector('#sort');
+    btnSortStart.addEventListener('click', () => {
+      const sortedFastaData = fastaSorter.sort(raw_data.fasta, raw_data.newick);
+      Dialog.showSaveDialog(null, {
+        title: 'save sorted fasta file',
+        filters: [
+          { name: 'FASTA File', extensions: ['fas', 'fasta'] }
+        ],
+        defaultPath: 'sorted_fasta.fas',
+      },
+      (fileName) => {
+        fs.writeFileSync(fileName, sortedFastaData);
+        alert('saved');
+      });
+    });
+  </script>
 </body>
 </html>
